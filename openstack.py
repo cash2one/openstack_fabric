@@ -7,16 +7,16 @@ from configs import *
 env.user = "root"
 env.password = "root"
 
-controller = ['ctrl']
+controller = ['controller']
 
-network = ['net']
+network = ['network']
 
 compute = [
-	'com01',
-	'com02',
-	'com04',
-	'com05',
-	'com06',
+	'compute01',
+	'compute02',
+	'compute04',
+	'compute05',
+	'compute06',
 ]
 
 nodes = controller + network + compute
