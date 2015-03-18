@@ -8,6 +8,8 @@ LOCAL_MY_CONF = "./my.cnf"
 MY_CONF = "/etc/my.cnf"
 MYSQL_PW = "root"
 
+LOCAL_OPENSTACK_DB = "./openstack-db"
+OPENSTACK_DB = "/usr/local/bin/openstack-db"
 
 AUTH_KEYS = "./authorized_keys"
 HOST_LIST = "/etc/hosts"

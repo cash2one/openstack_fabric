@@ -104,6 +104,8 @@ def _setup_database():
 	run("systemctl restart mariadb.service")
 	run("systemctl status mariadb.service")
 	run("mysqladmin -uroot -p" + MYSQL_PW + " password '" + MYSQL_PW+ "'")
+	put(LOCAL_OPENSTACK_DB, OPENSTACK_DB)
+	run("chmod 777 " + OPENSTACK_DB)
 
 # -----------------------
 # 5. install RabbitMQ on controller
@@ -149,6 +151,6 @@ def all():
 #	execute(_local_repo)
 #	execute(_setup_ntp)
 #	execute(_setup_selinux)
-#	execute(_setup_database)
-	execute(_setup_rabbitmq)
+	execute(_setup_database)
+#	execute(_setup_rabbitmq)
 

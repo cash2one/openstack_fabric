@@ -1,0 +1,127 @@
+#!/bin/bash
+#
+usage() {
+
+cat << EOF
+Set up a local database (MySQL) for use with openstack-<service>.
+This script will create a '<service>' database that is accessible
+only on localhost by user '<service>' with password '<service>'.
+The setup of a database with a multi-server OpenStack installation
+is outside of the scope of this simple helper script.
+
+Usage: openstack-db --service <service> --init|--drop [options]
+Options:
+  --help | -h
+      Print usage information.
+  --drop
+      Drop the database.
+  --init
+      Initialise the database.
+  --password <pw> | -p <pw>
+      Specify the password for user that will be used
+      to connect database for the service.  By default the
+      <service> parameter is used for the password.
+  --rootpw <pw> | -r <pw>
+      Specify the root database password.  If the script installs
+      the database server, it will set the root password to this value
+      instead of prompting for a password.  If the database server is
+      already installed, this password will be used to connect to the
+      database instead of having to prompt for it.
+  --service <service>
+      Specify the openstack service to manipulate the database for.
+      This option is mandatory.
+EOF
+
+  exit $1
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -h|--help) usage 0 ;;
+    --drop) MODE='drop' ;;
+    --init) MODE='init' ;;
+    --service) shift; APP=$1 ;;
+    -p|--password) shift; MYSQL_APP_PW=$1 ;;
+    -r|--rootpw) shift; MYSQL_ROOT_PW=$1 ;;
+    *) shift ;; # ignore
+  esac
+  shift
+done
+
+# Check mandatory args set
+if [ ! "$MODE" ] || [ ! "$APP" ]; then
+  usage 1
+fi
+
+case "$APP" in
+  nova|glance|keystone|cinder|neutron) ;;
+  *)
+    printf "Unrecognized --service $APP\n" >&2
+    printf "Please specify nova|glance|keystone|cinder|neutron\n" >&2
+    exit 1 ;;
+esac
+
+
+MYSQL_APP_PW_DEFAULT="$APP"
+: ${MYSQL_APP_PW=$MYSQL_APP_PW_DEFAULT}
+
+# Sanity check MySQL credentials.
+
+MYSQL_ROOT_PW_ARG=""
+if [ "${MYSQL_ROOT_PW+defined}" ]; then
+  MYSQL_ROOT_PW_ARG="--password=${MYSQL_ROOT_PW}"
+fi
+if ! echo "SELECT 1;" | mysql -u root ${MYSQL_ROOT_PW_ARG} > /dev/null; then
+  echo "Failed to connect to the MySQL server.  Please check your root user credentials." >&2
+  exit 1
+fi
+echo "Verified connectivity to MySQL."
+
+# Sanity check that there are no existing db or users
+
+if [ "$MODE" = 'init' ]; then
+  dbs=$(echo "SELECT COUNT(*) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='$APP';" |
+        mysql -u root ${MYSQL_ROOT_PW_ARG} | tail -n+2)
+  if [ "$dbs" != 0 ]; then
+    echo "Database '$APP' already exists. Please consider first running:" >&2
+    echo "$0 --drop --service $APP" >&2
+    exit 1
+  fi
+  users=$(echo "SELECT COUNT(*) FROM mysql.user WHERE User = '$APP';" |
+          mysql -u root ${MYSQL_ROOT_PW_ARG} | tail -n+2)
+  if [ "$users" != 0 ]; then
+    echo "User '$APP' already exists. Please consider first running:" >&2
+    echo "$0 --drop --service $APP" >&2
+    exit 1
+  fi
+fi
+
+# Create or Drop the db.
+
+if [ "$MODE" = 'init' ]; then
+  echo "Creating '$APP' database." >&2
+cat << EOF
+CREATE DATABASE $APP;
+CREATE USER '$APP'@'localhost' IDENTIFIED BY '${MYSQL_APP_PW}';
+CREATE USER '$APP'@'%' IDENTIFIED BY '${MYSQL_APP_PW}';
+GRANT ALL ON $APP.* TO '$APP'@'localhost';
+GRANT ALL ON $APP.* TO '$APP'@'%';
+flush privileges;
+EOF
+else
+  echo "Dropping '$APP' database." >&2
+drop_users=$(
+ echo "SELECT User,Host FROM mysql.user WHERE User = '$APP';" |
+ mysql -u root ${MYSQL_ROOT_PW_ARG} |
+ sed -n "s/\($APP\)[\t ]*\(.*\)/DROP USER '\1'@'\2';/p"
+)
+cat << EOF
+$drop_users
+DROP DATABASE IF EXISTS $APP;
+flush privileges;
+EOF
+fi |
+mysql -u root ${MYSQL_ROOT_PW_ARG}
+
+
+echo "Complete!"
