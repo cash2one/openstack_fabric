@@ -168,6 +168,35 @@ def _keystone_in_keystone():
 			--adminurl http://controller:35357/v2.0 \
 			--region regionOne")
 
+# -----------------------
+# 9. install glance on controller
+# -----------------------
+@roles('controller')
+def _setup_glance():
+	run("openstack-db --drop --service glance --rootpw root")
+	run("openstack-db --init --service glance --rootpw root")
+	with shell_env(	OS_TENANT_NAME="admin",
+			OS_USERNAME="admin", 
+			OS_PASSWORD="admin",
+			OS_AUTH_URL="http://controller:35357/v2.0"):
+		run("keystone user-create --name glance --pass glance")
+		run("keystone user-role-add --user glance --tenant service --role admin")
+		run("keystone service-create --name glance --type image --description 'OpenStack Image Service'")
+		run("keystone endpoint-create \
+			--service-id $(keystone service-list | awk '/ image / {print $2}') \
+			--publicurl http://controller:9292 \
+			--internalurl http://controller:9292 \
+			--adminurl http://controller:9292 \
+			--region regionOne")
+	
+	run("yum install -y openstack-glance python-glanceclient")
+	put(LOCAL_GLANCE_API_CONF, GLANCE_API_CONF)
+	put(LOCAL_GLANCE_REGISTRY_CONF, GLANCE_REGISTRY_CONF)
+	run("su -s /bin/sh -c 'glance-manage db_sync' glance")
+	run("systemctl enable openstack-glance-api.service openstack-glance-registry.service")
+	run("systemctl restart openstack-glance-api.service openstack-glance-registry.service")
+	run("systemctl status openstack-glance-api.service openstack-glance-registry.service")
+	
 
 # ========================================== #
 #                  tasks                     #
@@ -204,4 +233,5 @@ def all():
 	execute(_setup_keystone)
 	execute(_basic_in_keystone)
 	execute(_keystone_in_keystone)
+	execute(_setup_glance)
 

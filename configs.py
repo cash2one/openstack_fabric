@@ -14,6 +14,11 @@ OPENSTACK_DB = "/usr/local/bin/openstack-db"
 LOCAL_KEYSTONE_CONF = "./keystone.conf"
 KEYSTONE_CONF = "/etc/keystone/keystone.conf"
 
+LOCAL_GLANCE_API_CONF = "./glance-api.conf" 
+GLANCE_API_CONF = "/etc/glance/glance-api.conf"
+LOCAL_GLANCE_REGISTRY_CONF = "./glance-registry.conf"
+GLANCE_REGISTRY_CONF = "/etc/glance/glance-registry.conf"
+
 LOCAL_ADMIN_OPENRC= "./admin-openrc.sh"
 ADMIN_OPENRC = "/root/admin-openrc.sh"
 
