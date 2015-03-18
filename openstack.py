@@ -26,6 +26,19 @@ with open("/root/.ssh/id_rsa.pub", "r") as f:
 	with open(AUTH_KEYS, "w") as g:
 		g.write(line)
 
+def get_ipaddr(hostname):
+	with open("/etc/hosts", "r") as f:
+		for line in f:
+			line = line.strip()
+			if len(line.split()) == 0: continue
+			if line[0] == '#': continue
+			ipaddr = line.split()[0]
+			host = line.split()[1]
+			if host == hostname:
+				return ipaddr
+		raise Exception("Unknown host")
+
+
 env.roledefs = {
 	'controller' : controller,
 	'network' : network,
@@ -233,7 +246,32 @@ def _setup_nova_controller():
 	run("systemctl status openstack-nova-api.service openstack-nova-cert.service \
 		openstack-nova-consoleauth.service openstack-nova-scheduler.service \
 		openstack-nova-conductor.service openstack-nova-novncproxy.service")
+
+# -----------------------
+# 11. install nova on compute
+# -----------------------
+@roles('compute')
+@parallel
+def _setup_nova_compute():
+	run("yum install -y openstack-nova-compute sysfsutils")
+	put(LOCAL_NOVA_COMPUTE_CONF, NOVA_COMPUTE_CONF)
+	ipaddr = get_ipaddr(env.host)
+	run("sed -i 's/%MANAGEMENT_INTERFACE_IP_ADDRESS%/" + ipaddr + "/' " + NOVA_COMPUTE_CONF)
+	run("systemctl enable libvirtd.service openstack-nova-compute.service")
+	run("systemctl restart libvirtd.service openstack-nova-compute.service")
+	run("systemctl status libvirtd.service openstack-nova-compute.service")
 	
+# -----------------------
+# 12. check nova services
+# -----------------------
+@roles('controller')
+def _check_nova_services():
+	with shell_env(	OS_TENANT_NAME="admin",
+			OS_USERNAME="admin", 
+			OS_PASSWORD="admin",
+			OS_AUTH_URL="http://controller:35357/v2.0"):
+		run("nova service-list")
+
 
 # ========================================== #
 #                  tasks                     #
@@ -267,9 +305,11 @@ def all():
 #	execute(_setup_selinux)
 #	execute(_setup_database)
 #	execute(_setup_rabbitmq)
-	execute(_setup_keystone)
-	execute(_basic_in_keystone)
-	execute(_keystone_in_keystone)
-	execute(_setup_glance)
-	execute(_setup_nova_controller)
+#	execute(_setup_keystone)
+#	execute(_basic_in_keystone)
+#	execute(_keystone_in_keystone)
+#	execute(_setup_glance)
+#	execute(_setup_nova_controller)
+#	execute(_setup_nova_compute)
+	execute(_check_nova_services)
 
