@@ -196,6 +196,43 @@ def _setup_glance():
 	run("systemctl enable openstack-glance-api.service openstack-glance-registry.service")
 	run("systemctl restart openstack-glance-api.service openstack-glance-registry.service")
 	run("systemctl status openstack-glance-api.service openstack-glance-registry.service")
+
+# -----------------------
+# 10. install nova on controller
+# -----------------------
+@roles('controller')
+def _setup_nova_controller():
+	run("openstack-db --drop --service nova --rootpw root")
+	run("openstack-db --init --service nova --rootpw root")
+	with shell_env(	OS_TENANT_NAME="admin",
+			OS_USERNAME="admin", 
+			OS_PASSWORD="admin",
+			OS_AUTH_URL="http://controller:35357/v2.0"):
+		run("keystone user-create --name nova --pass nova")
+		run("keystone user-role-add --user nova --tenant service --role admin")
+		run("keystone service-create --name nova --type compute --description 'OpenStack Compute'")
+
+		run("keystone endpoint-create \
+			--service-id $(keystone service-list | awk '/ compute / {print $2}') \
+			--publicurl http://controller:8774/v2/%\(tenant_id\)s \
+			--internalurl http://controller:8774/v2/%\(tenant_id\)s \
+			--adminurl http://controller:8774/v2/%\(tenant_id\)s \
+			--region regionOne")
+	
+	run("yum install -y openstack-nova-api openstack-nova-cert openstack-nova-conductor \
+		openstack-nova-console openstack-nova-novncproxy openstack-nova-scheduler \
+		python-novaclient")
+	put(LOCAL_NOVA_CONTROLLER_CONF, NOVA_CONTROLLER_CONF)
+	run("su -s /bin/sh -c 'nova-manage db sync' nova")
+	run("# systemctl enable openstack-nova-api.service openstack-nova-cert.service \
+		openstack-nova-consoleauth.service openstack-nova-scheduler.service \
+		openstack-nova-conductor.service openstack-nova-novncproxy.service")
+	run("systemctl restart openstack-nova-api.service openstack-nova-cert.service \
+		openstack-nova-consoleauth.service openstack-nova-scheduler.service \
+		openstack-nova-conductor.service openstack-nova-novncproxy.service")
+	run("systemctl status openstack-nova-api.service openstack-nova-cert.service \
+		openstack-nova-consoleauth.service openstack-nova-scheduler.service \
+		openstack-nova-conductor.service openstack-nova-novncproxy.service")
 	
 
 # ========================================== #
@@ -234,4 +271,5 @@ def all():
 	execute(_basic_in_keystone)
 	execute(_keystone_in_keystone)
 	execute(_setup_glance)
+	execute(_setup_nova_controller)
 

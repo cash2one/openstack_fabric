@@ -19,6 +19,10 @@ GLANCE_API_CONF = "/etc/glance/glance-api.conf"
 LOCAL_GLANCE_REGISTRY_CONF = "./glance-registry.conf"
 GLANCE_REGISTRY_CONF = "/etc/glance/glance-registry.conf"
 
+LOCAL_NOVA_CONTROLLER_CONF = "./nova-controller.conf"
+NOVA_CONTROLLER_CONF = "/etc/nova/nova.conf"
+
+
 LOCAL_ADMIN_OPENRC= "./admin-openrc.sh"
 ADMIN_OPENRC = "/root/admin-openrc.sh"
 
