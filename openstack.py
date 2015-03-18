@@ -89,6 +89,7 @@ def _setup_ntp():
 # 3. install selinux
 # -----------------------
 @roles('all')
+@parallel
 def _setup_selinux():
 	run("yum install -y openstack-selinux")
 
