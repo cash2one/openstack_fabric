@@ -105,6 +105,18 @@ def _setup_database():
 	run("systemctl status mariadb.service")
 	run("mysqladmin -uroot -p" + MYSQL_PW + " password '" + MYSQL_PW+ "'")
 
+# -----------------------
+# 5. install RabbitMQ on controller
+# -----------------------
+@roles('controller')
+def _setup_rabbitmq():
+	run("yum install -y rabbitmq-server")
+	run("systemctl enable rabbitmq-server.service")
+	run("systemctl restart rabbitmq-server.service")
+	run("rabbitmqctl change_password guest guest")
+	run("echo '[{rabbit, [{loopback_users, []}]}].' > /etc/rabbitmq/rabbitmq.config")
+	run("systemctl restart rabbitmq-server.service")
+	run("systemctl status rabbitmq-server.service")
 
 
 # ========================================== #
@@ -137,5 +149,6 @@ def all():
 #	execute(_local_repo)
 #	execute(_setup_ntp)
 #	execute(_setup_selinux)
-	execute(_setup_database)
+#	execute(_setup_database)
+	execute(_setup_rabbitmq)
 
