@@ -103,6 +103,7 @@ def _setup_database():
 	run("systemctl enable mariadb.service")
 	run("systemctl restart mariadb.service")
 	run("systemctl status mariadb.service")
+	run("mysqladmin -uroot -p" + MYSQL_PW + " password '" + MYSQL_PW+ "'")
 
 
 

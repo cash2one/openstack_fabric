@@ -6,6 +6,7 @@ NTP_CONFIG = "/etc/ntp.conf"
 
 LOCAL_MY_CONF = "./my.cnf"
 MY_CONF = "/etc/my.cnf"
+MYSQL_PW = "root"
 
 
 AUTH_KEYS = "./authorized_keys"
