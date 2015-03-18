@@ -14,6 +14,11 @@ OPENSTACK_DB = "/usr/local/bin/openstack-db"
 LOCAL_KEYSTONE_CONF = "./keystone.conf"
 KEYSTONE_CONF = "/etc/keystone/keystone.conf"
 
+LOCAL_ADMIN_OPENRC= "./admin-openrc.sh"
+ADMIN_OPENRC = "/root/admin-openrc.sh"
+
+LOCAL_DEMO_OPENRC= "./demo-openrc.sh"
+DEMO_OPENRC = "/root/demo-openrc.sh"
 
 
 AUTH_KEYS = "./authorized_keys"

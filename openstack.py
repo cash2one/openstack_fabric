@@ -151,6 +151,8 @@ def _basic_in_keystone():
 		run("keystone tenant-create --name demo --description 'Demo Tenant'")
 		run("keystone user-create --name demo --tenant demo --pass demo --email demo@inspur.com")
 		run("keystone tenant-create --name service --description 'Service Tenant'")
+		put(LOCAL_ADMIN_OPENRC, ADMIN_OPENRC)
+		put(LOCAL_DEMO_OPENRC, DEMO_OPENRC)
 
 # -----------------------
 # 8. keystone info in keystone
@@ -199,7 +201,7 @@ def all():
 #	execute(_setup_selinux)
 #	execute(_setup_database)
 #	execute(_setup_rabbitmq)
-#	execute(_setup_keystone)
-#	execute(_basic_in_keystone)
+	execute(_setup_keystone)
+	execute(_basic_in_keystone)
 	execute(_keystone_in_keystone)
 
