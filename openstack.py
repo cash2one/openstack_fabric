@@ -120,6 +120,52 @@ def _setup_rabbitmq():
 	run("systemctl restart rabbitmq-server.service")
 	run("systemctl status rabbitmq-server.service")
 
+# -----------------------
+# 6. install keystone on controller
+# -----------------------
+@roles('controller')
+def _setup_keystone():
+	run("openstack-db --drop --service keystone --rootpw root")
+	run("openstack-db --init --service keystone --rootpw root")
+	run("yum install -y openstack-keystone python-keystoneclient")
+	put(LOCAL_KEYSTONE_CONF, KEYSTONE_CONF)
+	run("keystone-manage pki_setup --keystone-user keystone --keystone-group keystone")
+	run("chown -R keystone:keystone /var/log/keystone")
+	run("chown -R keystone:keystone /etc/keystone/ssl")
+	run("chmod -R o-rwx /etc/keystone/ssl")
+	run("su -s /bin/sh -c 'keystone-manage db_sync' keystone")
+	run("systemctl enable openstack-keystone.service")
+	run("systemctl restart openstack-keystone.service")
+	run("systemctl status openstack-keystone.service")
+
+# -----------------------
+# 7. basic info in keystone
+# -----------------------
+@roles('controller')
+def _basic_in_keystone():
+	with shell_env(OS_SERVICE_TOKEN='admin', OS_SERVICE_ENDPOINT="http://controller:35357/v2.0"):
+		run("keystone tenant-create --name admin --description 'Admin Tenant'")
+		run("keystone user-create --name admin --pass admin --email admin@inspur.com")
+		run("keystone role-create --name admin")
+		run("keystone user-role-add --user admin --tenant admin --role admin")
+		run("keystone tenant-create --name demo --description 'Demo Tenant'")
+		run("keystone user-create --name demo --tenant demo --pass demo --email demo@inspur.com")
+		run("keystone tenant-create --name service --description 'Service Tenant'")
+
+# -----------------------
+# 8. keystone info in keystone
+# -----------------------
+@roles('controller')
+def _keystone_in_keystone():
+	with shell_env(OS_SERVICE_TOKEN='admin', OS_SERVICE_ENDPOINT="http://controller:35357/v2.0"):
+		run("keystone service-create --name keystone --type identity --description 'OpenStack Identity'")
+		run("keystone endpoint-create \
+			--service-id $(keystone service-list | awk '/ identity / {print $2}') \
+			--publicurl http://controller:5000/v2.0 \
+			--internalurl http://controller:5000/v2.0 \
+			--adminurl http://controller:35357/v2.0 \
+			--region regionOne")
+
 
 # ========================================== #
 #                  tasks                     #
@@ -151,6 +197,9 @@ def all():
 #	execute(_local_repo)
 #	execute(_setup_ntp)
 #	execute(_setup_selinux)
-	execute(_setup_database)
+#	execute(_setup_database)
 #	execute(_setup_rabbitmq)
+#	execute(_setup_keystone)
+#	execute(_basic_in_keystone)
+	execute(_keystone_in_keystone)
 

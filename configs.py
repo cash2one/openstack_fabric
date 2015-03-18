@@ -11,6 +11,11 @@ MYSQL_PW = "root"
 LOCAL_OPENSTACK_DB = "./openstack-db"
 OPENSTACK_DB = "/usr/local/bin/openstack-db"
 
+LOCAL_KEYSTONE_CONF = "./keystone.conf"
+KEYSTONE_CONF = "/etc/keystone/keystone.conf"
+
+
+
 AUTH_KEYS = "./authorized_keys"
 HOST_LIST = "/etc/hosts"
 
