@@ -93,6 +93,17 @@ def _setup_ntp():
 def _setup_selinux():
 	run("yum install -y openstack-selinux")
 
+# -----------------------
+# 4. install DB on controller
+# -----------------------
+@roles('controller')
+def _setup_database():
+	run("yum install -y mariadb mariadb-server MySQL-python")
+	put(LOCAL_MY_CONF, MY_CONF)
+	run("systemctl enable mariadb.service")
+	run("systemctl restart mariadb.service")
+	run("systemctl status mariadb.service")
+
 
 
 # ========================================== #
@@ -122,7 +133,8 @@ def test():
 	execute(_test_connection)
 
 def all():
-	execute(_local_repo)
-	execute(_setup_ntp)
-	execute(_setup_selinux)
+#	execute(_local_repo)
+#	execute(_setup_ntp)
+#	execute(_setup_selinux)
+	execute(_setup_database)
 
