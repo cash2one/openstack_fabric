@@ -57,6 +57,9 @@ LOCAL_NOVA_NEUTRON_UPDATE_COMPUTE_CONF = "./neutron-compute/nova.conf"
 NOVA_NEUTRON_UPDATE_COMPUTE_CONF = "/etc/nova/nova.conf"
 
 
+LOCAL_HORIZON_CONF = "./horizon/local_settings"
+HORIZON_CONF = "/etc/openstack-dashboard/local_settings"
+
 LOCAL_ADMIN_OPENRC= "./admin-openrc.sh"
 ADMIN_OPENRC = "/root/admin-openrc.sh"
 

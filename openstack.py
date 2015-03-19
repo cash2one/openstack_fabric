@@ -383,6 +383,19 @@ def _setup_neutron_compute():
 	run("systemctl restart neutron-openvswitch-agent.service")
 	run("systemctl status neutron-openvswitch-agent.service")
 	
+# -----------------------
+# 16. install horizon on controller
+# -----------------------
+@roles('controller')
+def _setup_horizon():
+	run("yum install -y openstack-dashboard httpd mod_wsgi memcached python-memcached")
+	put(LOCAL_HORIZON_CONF, HORIZON_CONF)
+	#run("setsebool -P httpd_can_network_connect on")
+	run("chown -R apache:apache /usr/share/openstack-dashboard/static")
+	run("systemctl enable httpd.service memcached.service")
+	run("systemctl restart httpd.service memcached.service")
+	run("systemctl status httpd.service memcached.service")
+
 
 # ========================================== #
 #                  tasks                     #
@@ -425,5 +438,6 @@ def all():
 #	execute(_check_nova_services)
 #	execute(_setup_neutron_controller)
 #	execute(_setup_neutron_network)
-	execute(_setup_neutron_compute)
+#	execute(_setup_neutron_compute)
+	execute(_setup_horizon)
 
