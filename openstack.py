@@ -114,6 +114,8 @@ def _setup_selinux():
 def _setup_database():
 	run("yum install -y mariadb mariadb-server MySQL-python")
 	put(LOCAL_MY_CONF, MY_CONF)
+	ipaddr = get_ipaddr(env.host)
+	run("sed -i 's/%CONTROLLER_MANAGE_IP%/" + ipaddr + "/g' " + MY_CONF)
 	run("systemctl enable mariadb.service")
 	run("systemctl restart mariadb.service")
 	run("systemctl status mariadb.service")
@@ -237,6 +239,8 @@ def _setup_nova_controller():
 		openstack-nova-console openstack-nova-novncproxy openstack-nova-scheduler \
 		python-novaclient")
 	put(LOCAL_NOVA_CONTROLLER_CONF, NOVA_CONTROLLER_CONF)
+	ipaddr = get_ipaddr(env.host)
+	run("sed -i 's/%CONTROLLER_MANAGE_IP%/" + ipaddr + "/g' " + NOVA_CONTROLLER_CONF)
 	run("su -s /bin/sh -c 'nova-manage db sync' nova")
 	run("# systemctl enable openstack-nova-api.service openstack-nova-cert.service \
 		openstack-nova-consoleauth.service openstack-nova-scheduler.service \
@@ -309,6 +313,8 @@ def _setup_neutron_controller():
 	run("rm -f /etc/neutron/plugin.ini")
 	run("ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini")
 	put(LOCAL_NOVA_NEUTRON_UPDATE_CONTROLLER_CONF, NOVA_NEUTRON_UPDATE_CONTROLLER_CONF)
+	ipaddr = get_ipaddr(env.host)
+	run("sed -i 's/%CONTROLLER_MANAGE_IP%/" + ipaddr + "/g' " + NOVA_NEUTRON_UPDATE_CONTROLLER_CONF)
 
 	run("su -s /bin/sh -c 'neutron-db-manage --config-file /etc/neutron/neutron.conf \
 		--config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade juno' neutron")
@@ -372,6 +378,9 @@ def _setup_neutron_compute():
 	run("systemctl restart openvswitch.service")
 	run("systemctl status openvswitch.service")
 	put(LOCAL_NOVA_NEUTRON_UPDATE_COMPUTE_CONF, NOVA_NEUTRON_UPDATE_COMPUTE_CONF)
+	ipaddr = get_ipaddr(env.host)
+	run("sed -i 's/%MANAGE_IPADDR%/" + ipaddr + "/g' " + NOVA_NEUTRON_UPDATE_COMPUTE_CONF)
+
 	run("rm -f /etc/neutron/plugin.ini")
 	run("ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini")
 	run("cp /usr/lib/systemd/system/neutron-openvswitch-agent.service \
