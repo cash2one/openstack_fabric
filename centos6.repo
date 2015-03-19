@@ -1,5 +1,0 @@
-[base]
-name=CentOS-$releasever - Base
-baseurl=http://100.1.8.100/centos/$releasever/os/$basearch/
-gpgcheck=0
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6

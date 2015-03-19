@@ -109,11 +109,6 @@ LOCAL_EPEL7_REPO = "./epel7.repo"
 CENTOS7_REPO = "/etc/yum.repos.d/CentOS-Base.repo"
 EPEL7_REPO = "/etc/yum.repos.d/epel.repo"
 
-LOCAL_CENTOS6_REPO = "./centos6.repo"
-LOCAL_EPEL6_REPO = "./epel6.repo"
-CENTOS6_REPO = "/etc/yum.repos.d/CentOS-Base.repo"
-EPEL6_REPO = "/etc/yum.repos.d/epel.repo"
-
 LOCAL_OPENSTACK_REPO = "./openstack.repo"
 OPENSTACK_REPO = "/etc/yum.repos.d/rdo-release.repo"
 
