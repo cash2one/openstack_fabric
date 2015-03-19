@@ -10,6 +10,8 @@ MYSQL_PW = "root"
 
 EX_BR_INT = "eno2"
 
+CINDER_LVM_DISK = "/dev/sdb"
+
 LOCAL_OPENSTACK_DB = "./openstack-db"
 OPENSTACK_DB = "/usr/local/bin/openstack-db"
 
@@ -56,6 +58,11 @@ NEUTRON_ML2_COMPUTE_CONF = "/etc/neutron/plugins/ml2/ml2_conf.ini"
 LOCAL_NOVA_NEUTRON_UPDATE_COMPUTE_CONF = "./neutron-compute/nova.conf"
 NOVA_NEUTRON_UPDATE_COMPUTE_CONF = "/etc/nova/nova.conf"
 
+LOCAL_CINDER_CONTROLLER_CONF = "./cinder-controller/cinder.conf"
+CINDER_CONTROLLER_CONF = "/etc/cinder/cinder.conf"
+
+LOCAL_CINDER_BLOCK_CONF = "./cinder-block/cinder.conf"
+CINDER_BLOCK_CONF = "/etc/cinder/cinder.conf"
 
 LOCAL_HORIZON_CONF = "./horizon/local_settings"
 HORIZON_CONF = "/etc/openstack-dashboard/local_settings"

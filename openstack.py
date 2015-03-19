@@ -43,6 +43,7 @@ env.roledefs = {
 	'controller' : controller,
 	'network' : network,
 	'compute' : compute,
+	'block' : compute,
 	'all' : nodes,
 }
 
@@ -396,6 +397,61 @@ def _setup_horizon():
 	run("systemctl restart httpd.service memcached.service")
 	run("systemctl status httpd.service memcached.service")
 
+# -----------------------
+# 17. install cinder on controller
+# -----------------------
+@roles('controller')
+def _setup_cinder_controller():
+	run("openstack-db --drop --service cinder --rootpw root")
+	run("openstack-db --init --service cinder --rootpw root")
+	with shell_env(	OS_TENANT_NAME="admin",
+			OS_USERNAME="admin", 
+			OS_PASSWORD="admin",
+			OS_AUTH_URL="http://controller:35357/v2.0"):
+		run("keystone user-create --name cinder --pass cinder")
+		run("keystone user-role-add --user cinder --tenant service --role admin")
+		run("keystone service-create --name cinder --type volume --description 'OpenStack Block Storage'")
+		run("keystone service-create --name cinderv2 --type volumev2 --description 'OpenStack Block Storage'")
+		run("keystone endpoint-create \
+			--service-id $(keystone service-list | awk '/ volume / {print $2}') \
+			--publicurl http://controller:8776/v1/%\(tenant_id\)s \
+			--internalurl http://controller:8776/v1/%\(tenant_id\)s \
+			--adminurl http://controller:8776/v1/%\(tenant_id\)s \
+			--region regionOne")
+		run("keystone endpoint-create \
+			--service-id $(keystone service-list | awk '/ volumev2 / {print $2}') \
+			--publicurl http://controller:8776/v2/%\(tenant_id\)s \
+			--internalurl http://controller:8776/v2/%\(tenant_id\)s \
+			--adminurl http://controller:8776/v2/%\(tenant_id\)s \
+			--region regionOne")
+	run("yum install -y openstack-cinder python-cinderclient python-oslo-db")
+	put(LOCAL_CINDER_CONTROLLER_CONF, CINDER_CONTROLLER_CONF)
+	ipaddr = get_ipaddr(env.host)
+	run("sed -i 's/%CINDER_CONTROLLER_IP%/" + ipaddr + "/g' " + CINDER_CONTROLLER_CONF)
+	run("su -s /bin/sh -c 'cinder-manage db sync' cinder")
+	run("systemctl enable openstack-cinder-api.service openstack-cinder-scheduler.service")
+	run("systemctl restart openstack-cinder-api.service openstack-cinder-scheduler.service")
+	run("systemctl status openstack-cinder-api.service openstack-cinder-scheduler.service")
+
+# -----------------------
+# 18. install cinder on block-server
+# -----------------------
+@roles('block')
+@parallel
+def _setup_cinder_block():
+	run("yum install -y lvm2")
+	run("systemctl enable lvm2-lvmetad.service")
+	run("systemctl restart lvm2-lvmetad.service")
+	run("systemctl status lvm2-lvmetad.service")
+	run("vgremove cinder-volumes | echo 'not created'")
+	run("pvremove " + CINDER_LVM_DISK + " | echo 'not created'")
+	run("vgcreate cinder-volumes " + CINDER_LVM_DISK)
+	run("yum install -y openstack-cinder targetcli python-oslo-db MySQL-python")
+	put(LOCAL_CINDER_BLOCK_CONF, CINDER_BLOCK_CONF)
+	run("systemctl enable openstack-cinder-volume.service target.service")
+	run("systemctl restart openstack-cinder-volume.service target.service")
+	run("systemctl status openstack-cinder-volume.service target.service")
+	
 
 # ========================================== #
 #                  tasks                     #
@@ -424,20 +480,22 @@ def test():
 	execute(_test_connection)
 
 def all():
-#	execute(_local_repo)
-#	execute(_setup_ntp)
-#	execute(_setup_selinux)
-#	execute(_setup_database)
-#	execute(_setup_rabbitmq)
-#	execute(_setup_keystone)
-#	execute(_basic_in_keystone)
-#	execute(_keystone_in_keystone)
-#	execute(_setup_glance)
-#	execute(_setup_nova_controller)
-#	execute(_setup_nova_compute)
-#	execute(_check_nova_services)
-#	execute(_setup_neutron_controller)
-#	execute(_setup_neutron_network)
-#	execute(_setup_neutron_compute)
+	execute(_local_repo)
+	execute(_setup_ntp)
+	execute(_setup_selinux)
+	execute(_setup_database)
+	execute(_setup_rabbitmq)
+	execute(_setup_keystone)
+	execute(_basic_in_keystone)
+	execute(_keystone_in_keystone)
+	execute(_setup_glance)
+	execute(_setup_nova_controller)
+	execute(_setup_nova_compute)
+	execute(_check_nova_services)
+	execute(_setup_neutron_controller)
+	execute(_setup_neutron_network)
+	execute(_setup_neutron_compute)
+	execute(_setup_cinder_controller)
+	execute(_setup_cinder_block)
 	execute(_setup_horizon)
 
