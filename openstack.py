@@ -326,7 +326,7 @@ def _setup_neutron_controller():
 def _setup_neutron_network():
 	put(LOCAL_SYSCTL_NETWORK_CONF, SYSCTL_NETWORK_CONF)
 	run("sysctl -p")
-	run("yum install -y yum install openstack-neutron openstack-neutron-ml2 openstack-neutron-openvswitch")
+	run("yum install -y openstack-neutron openstack-neutron-ml2 openstack-neutron-openvswitch")
 	put(LOCAL_SYSCTL_NETWORK_CONF, SYSCTL_NETWORK_CONF)
 	put(LOCAL_NEUTRON_NETWORK_CONF, NEUTRON_NETWORK_CONF)
 	put(LOCAL_NEUTRON_L3_NETWORK_CONF, NEUTRON_NETWORK_L3_CONF)
@@ -338,6 +338,7 @@ def _setup_neutron_network():
 	run("systemctl enable openvswitch.service")
 	run("systemctl restart openvswitch.service")
 	run("systemctl status openvswitch.service")
+	run("ovs-vsctl --if-exists del-br br-ex")
 	run("ovs-vsctl add-br br-ex")
 	run("ovs-vsctl add-port br-ex " + EX_BR_INT)
 	run("rm -f /etc/neutron/plugin.ini")
