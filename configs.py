@@ -45,7 +45,16 @@ NEUTRON_NETWORK_DHCP_CONF = "/etc/neutron/dhcp_agent.ini"
 LOCAL_NEUTRON_METADATA_NETWORK_CONF = "./neutron-network/metadata_agent.ini"
 NEUTRON_NETWORK_METADATA_CONF = "/etc/neutron/metadata_agent.ini"
 LOCAL_NEUTRON_ML2_NETWORK_CONF = "./neutron-network/ml2_conf.ini"
-NEUTRON_NETWORK_ML2_CONF = "/etc/neutron/plugins/ml2/ml2_conf.ini"
+NEUTRON_ML2_NETWORK_CONF = "/etc/neutron/plugins/ml2/ml2_conf.ini"
+
+LOCAL_SYSCTL_COMPUTE_CONF = "./neutron-compute/sysctl.conf"
+SYSCTL_COMPUTE_CONF = "/etc/sysctl.conf"
+LOCAL_NEUTRON_COMPUTE_CONF = "./neutron-network/neutron.conf"
+NEUTRON_COMPUTE_CONF = "/etc/neutron/neutron.conf"
+LOCAL_NEUTRON_ML2_COMPUTE_CONF = "./neutron-network/ml2_conf.ini"
+NEUTRON_ML2_COMPUTE_CONF = "/etc/neutron/plugins/ml2/ml2_conf.ini"
+LOCAL_NOVA_NEUTRON_UPDATE_COMPUTE_CONF = "./neutron-compute/nova.conf"
+NOVA_NEUTRON_UPDATE_COMPUTE_CONF = "/etc/nova/nova.conf"
 
 
 LOCAL_ADMIN_OPENRC= "./admin-openrc.sh"

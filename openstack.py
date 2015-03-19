@@ -256,7 +256,7 @@ def _setup_nova_compute():
 	run("yum install -y openstack-nova-compute sysfsutils")
 	put(LOCAL_NOVA_COMPUTE_CONF, NOVA_COMPUTE_CONF)
 	ipaddr = get_ipaddr(env.host)
-	run("sed -i 's/%MANAGEMENT_INTERFACE_IP_ADDRESS%/" + ipaddr + "/' " + NOVA_COMPUTE_CONF)
+	run("sed -i 's/%MANAGEMENT_INTERFACE_IP_ADDRESS%/" + ipaddr + "/g' " + NOVA_COMPUTE_CONF)
 	run("systemctl enable libvirtd.service openstack-nova-compute.service")
 	run("systemctl restart libvirtd.service openstack-nova-compute.service")
 	run("systemctl status libvirtd.service openstack-nova-compute.service")
@@ -304,7 +304,7 @@ def _setup_neutron_controller():
 		service_tenant_id = run("keystone tenant-get service | grep id |awk '{print $4}'").strip()
 		if len(service_tenant_id) != 32:
 			raise Exception("Unknown Tenant")
-		run("sed -i 's/%SERVICE_TENANT_ID%/" + service_tenant_id + "/' " + NEUTRON_ML2_CONTROLLER_CONF)
+		run("sed -i 's/%SERVICE_TENANT_ID%/" + service_tenant_id + "/g' " + NEUTRON_ML2_CONTROLLER_CONF)
 	run("rm -f /etc/neutron/plugin.ini")
 	run("ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini")
 	put(LOCAL_NOVA_NEUTRON_UPDATE_CONTROLLER_CONF, NOVA_NEUTRON_UPDATE_CONTROLLER_CONF)
@@ -327,14 +327,13 @@ def _setup_neutron_network():
 	put(LOCAL_SYSCTL_NETWORK_CONF, SYSCTL_NETWORK_CONF)
 	run("sysctl -p")
 	run("yum install -y openstack-neutron openstack-neutron-ml2 openstack-neutron-openvswitch")
-	put(LOCAL_SYSCTL_NETWORK_CONF, SYSCTL_NETWORK_CONF)
 	put(LOCAL_NEUTRON_NETWORK_CONF, NEUTRON_NETWORK_CONF)
 	put(LOCAL_NEUTRON_L3_NETWORK_CONF, NEUTRON_NETWORK_L3_CONF)
 	put(LOCAL_NEUTRON_DHCP_NETWORK_CONF, NEUTRON_NETWORK_DHCP_CONF)
 	put(LOCAL_NEUTRON_METADATA_NETWORK_CONF, NEUTRON_NETWORK_METADATA_CONF)
-	put(LOCAL_NEUTRON_ML2_NETWORK_CONF, NEUTRON_NETWORK_ML2_CONF)
+	put(LOCAL_NEUTRON_ML2_NETWORK_CONF, NEUTRON_ML2_NETWORK_CONF)
 	tunnel_ip = run("ip addr show " + EX_BR_INT + " | sed -n '3,3p' | awk '{print $2}' | awk -F'/' '{print $1}'")
-	run("sed -i 's/%TUNNELS_INTERFACE_IPADDR%/" + tunnel_ip + "/' " + NEUTRON_ML2_CONTROLLER_CONF)
+	run("sed -i 's/%TUNNELS_INTERFACE_IPADDR%/" + tunnel_ip + "/g' " + NEUTRON_ML2_NETWORK_CONF)
 	run("systemctl enable openvswitch.service")
 	run("systemctl restart openvswitch.service")
 	run("systemctl status openvswitch.service")
@@ -355,6 +354,35 @@ def _setup_neutron_network():
 	run("systemctl status neutron-openvswitch-agent.service neutron-l3-agent.service \
 		neutron-dhcp-agent.service neutron-metadata-agent.service")
 
+# -----------------------
+# 15. install neutron on compute
+# -----------------------
+@roles('compute')
+@parallel
+def _setup_neutron_compute():
+	put(LOCAL_SYSCTL_COMPUTE_CONF, SYSCTL_COMPUTE_CONF)
+	run("sysctl -p")
+	run("yum install -y openstack-neutron-ml2 openstack-neutron-openvswitch")
+	put(LOCAL_NEUTRON_COMPUTE_CONF, NEUTRON_COMPUTE_CONF)
+	put(LOCAL_NEUTRON_ML2_COMPUTE_CONF, NEUTRON_ML2_COMPUTE_CONF)
+	tunnel_ip = run("ip addr show " + EX_BR_INT + " | sed -n '3,3p' | awk '{print $2}' | awk -F'/' '{print $1}'")
+	run("sed -i 's/%TUNNELS_INTERFACE_IPADDR%/" + tunnel_ip + "/g' " + NEUTRON_ML2_COMPUTE_CONF)
+	run("systemctl enable openvswitch.service")
+	run("systemctl restart openvswitch.service")
+	run("systemctl status openvswitch.service")
+	put(LOCAL_NOVA_NEUTRON_UPDATE_COMPUTE_CONF, NOVA_NEUTRON_UPDATE_COMPUTE_CONF)
+	run("rm -f /etc/neutron/plugin.ini")
+	run("ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini")
+	run("cp /usr/lib/systemd/system/neutron-openvswitch-agent.service \
+		/usr/lib/systemd/system/neutron-openvswitch-agent.service.orig")
+	run("sed -i 's,plugins/openvswitch/ovs_neutron_plugin.ini,plugin.ini,g' \
+		/usr/lib/systemd/system/neutron-openvswitch-agent.service")
+	run("systemctl restart openstack-nova-compute.service")
+	run("systemctl status openstack-nova-compute.service")
+	run("systemctl enable neutron-openvswitch-agent.service")
+	run("systemctl restart neutron-openvswitch-agent.service")
+	run("systemctl status neutron-openvswitch-agent.service")
+	
 
 # ========================================== #
 #                  tasks                     #
@@ -396,5 +424,6 @@ def all():
 #	execute(_setup_nova_compute)
 #	execute(_check_nova_services)
 #	execute(_setup_neutron_controller)
-	execute(_setup_neutron_network)
+#	execute(_setup_neutron_network)
+	execute(_setup_neutron_compute)
 
