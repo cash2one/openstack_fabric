@@ -272,6 +272,88 @@ def _check_nova_services():
 			OS_AUTH_URL="http://controller:35357/v2.0"):
 		run("nova service-list")
 
+# -----------------------
+# 13. install neutron on controller
+# -----------------------
+@roles('controller')
+def _setup_neutron_controller():
+	run("openstack-db --drop --service neutron --rootpw root")
+	run("openstack-db --init --service neutron --rootpw root")
+	with shell_env(	OS_TENANT_NAME="admin",
+			OS_USERNAME="admin", 
+			OS_PASSWORD="admin",
+			OS_AUTH_URL="http://controller:35357/v2.0"):
+		run("keystone user-create --name neutron --pass neutron")
+		run("keystone user-role-add --user neutron --tenant service --role admin")
+		run("keystone service-create --name neutron --type network --description 'OpenStack Networking'")
+		run("keystone endpoint-create \
+			--service-id $(keystone service-list | awk '/ network / {print $2}') \
+			--publicurl http://controller:9696 \
+			--adminurl http://controller:9696 \
+			--internalurl http://controller:9696 \
+			--region regionOne")
+
+	run("yum install -y openstack-neutron openstack-neutron-ml2 python-neutronclient which")
+	put(LOCAL_NEUTRON_CONTROLLER_CONF, NEUTRON_CONTROLLER_CONF)
+	put(LOCAL_NEUTRON_ML2_CONTROLLER_CONF, NEUTRON_ML2_CONTROLLER_CONF)
+
+	with shell_env(	OS_TENANT_NAME="admin",
+			OS_USERNAME="admin", 
+			OS_PASSWORD="admin",
+			OS_AUTH_URL="http://controller:35357/v2.0"):
+		service_tenant_id = run("keystone tenant-get service | grep id |awk '{print $4}'").strip()
+		if len(service_tenant_id) != 32:
+			raise Exception("Unknown Tenant")
+		run("sed -i 's/%SERVICE_TENANT_ID%/" + service_tenant_id + "/' " + NEUTRON_ML2_CONTROLLER_CONF)
+	run("rm -f /etc/neutron/plugin.ini")
+	run("ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini")
+	put(LOCAL_NOVA_NEUTRON_UPDATE_CONTROLLER_CONF, NOVA_NEUTRON_UPDATE_CONTROLLER_CONF)
+
+	run("su -s /bin/sh -c 'neutron-db-manage --config-file /etc/neutron/neutron.conf \
+		--config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade juno' neutron")
+	run("systemctl restart openstack-nova-api.service openstack-nova-scheduler.service \
+		openstack-nova-conductor.service")
+	run("systemctl status openstack-nova-api.service openstack-nova-scheduler.service \
+		openstack-nova-conductor.service")
+	run("systemctl enable neutron-server.service")
+	run("systemctl restart neutron-server.service")
+	run("systemctl status neutron-server.service")
+
+# -----------------------
+# 14. install neutron on network
+# -----------------------
+@roles('network')
+def _setup_neutron_network():
+	put(LOCAL_SYSCTL_NETWORK_CONF, SYSCTL_NETWORK_CONF)
+	run("sysctl -p")
+	run("yum install -y yum install openstack-neutron openstack-neutron-ml2 openstack-neutron-openvswitch")
+	put(LOCAL_SYSCTL_NETWORK_CONF, SYSCTL_NETWORK_CONF)
+	put(LOCAL_NEUTRON_NETWORK_CONF, NEUTRON_NETWORK_CONF)
+	put(LOCAL_NEUTRON_L3_NETWORK_CONF, NEUTRON_NETWORK_L3_CONF)
+	put(LOCAL_NEUTRON_DHCP_NETWORK_CONF, NEUTRON_NETWORK_DHCP_CONF)
+	put(LOCAL_NEUTRON_METADATA_NETWORK_CONF, NEUTRON_NETWORK_METADATA_CONF)
+	put(LOCAL_NEUTRON_ML2_NETWORK_CONF, NEUTRON_NETWORK_ML2_CONF)
+	tunnel_ip = run("ip addr show " + EX_BR_INT + " | sed -n '3,3p' | awk '{print $2}' | awk -F'/' '{print $1}'")
+	run("sed -i 's/%TUNNELS_INTERFACE_IPADDR%/" + tunnel_ip + "/' " + NEUTRON_ML2_CONTROLLER_CONF)
+	run("systemctl enable openvswitch.service")
+	run("systemctl restart openvswitch.service")
+	run("systemctl status openvswitch.service")
+	run("ovs-vsctl add-br br-ex")
+	run("ovs-vsctl add-port br-ex " + EX_BR_INT)
+	run("rm -f /etc/neutron/plugin.ini")
+	run("ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini")
+	run("cp /usr/lib/systemd/system/neutron-openvswitch-agent.service \
+		/usr/lib/systemd/system/neutron-openvswitch-agent.service.orig")
+	run("sed -i 's,plugins/openvswitch/ovs_neutron_plugin.ini,plugin.ini,g' \
+		/usr/lib/systemd/system/neutron-openvswitch-agent.service")
+	run("systemctl enable neutron-openvswitch-agent.service neutron-l3-agent.service \
+		neutron-dhcp-agent.service neutron-metadata-agent.service \
+		neutron-ovs-cleanup.service")
+	run("systemctl restart neutron-openvswitch-agent.service neutron-l3-agent.service \
+		neutron-dhcp-agent.service neutron-metadata-agent.service")
+	run("systemctl status neutron-openvswitch-agent.service neutron-l3-agent.service \
+		neutron-dhcp-agent.service neutron-metadata-agent.service")
+
 
 # ========================================== #
 #                  tasks                     #
@@ -311,5 +393,7 @@ def all():
 #	execute(_setup_glance)
 #	execute(_setup_nova_controller)
 #	execute(_setup_nova_compute)
-	execute(_check_nova_services)
+#	execute(_check_nova_services)
+#	execute(_setup_neutron_controller)
+	execute(_setup_neutron_network)
 
