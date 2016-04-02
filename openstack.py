@@ -462,6 +462,8 @@ def _setup_cinder_block():
 	run("vgcreate cinder-volumes " + CINDER_LVM_DISK)
 	run("yum install -y openstack-cinder targetcli python-oslo-db MySQL-python")
 	put(LOCAL_CINDER_BLOCK_CONF, CINDER_BLOCK_CONF)
+	ipaddr = get_ipaddr(env.host)
+	run("sed -i 's/%MANAGEMENT_INTERFACE_IPADDR%/" + ipaddr + "/g' " + CINDER_BLOCK_CONF)
 	run("systemctl enable openstack-cinder-volume.service target.service")
 	run("systemctl restart openstack-cinder-volume.service target.service")
 	run("systemctl status openstack-cinder-volume.service target.service")
