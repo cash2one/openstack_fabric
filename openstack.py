@@ -457,7 +457,7 @@ def _setup_cinder_block():
 	run("systemctl enable lvm2-lvmetad.service")
 	run("systemctl restart lvm2-lvmetad.service")
 	run("systemctl status lvm2-lvmetad.service")
-	run("vgremove cinder-volumes | echo 'not created'")
+	run("vgremove -f cinder-volumes | echo 'not created'")
 	run("pvremove " + CINDER_LVM_DISK + " | echo 'not created'")
 	run("vgcreate cinder-volumes " + CINDER_LVM_DISK)
 	run("yum install -y openstack-cinder targetcli python-oslo-db MySQL-python")
