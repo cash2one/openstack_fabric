@@ -8,7 +8,8 @@ LOCAL_MY_CONF = "./my.cnf"
 MY_CONF = "/etc/my.cnf"
 MYSQL_PW = "root"
 
-EX_BR_INT = "eno2"
+BR_EX_IF = "eno50336512"
+BR_INT_IF = "eno33557248"
 
 CINDER_LVM_DISK = "/dev/sdb"
 
