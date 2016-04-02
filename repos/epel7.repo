@@ -1,6 +1,6 @@
 [epel]
 name=Extra Packages for Enterprise Linux 7 - $basearch
-baseurl=http://100.1.8.161/pub/epel/7/$basearch
+baseurl=http://mirrors.incloud-ci.com/pub/epel/7/$basearch
 failovermethod=priority
 enabled=1
 gpgcheck=0

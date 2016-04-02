@@ -1,6 +1,6 @@
 [openstack-juno]
 name=OpenStack Juno Repository
-baseurl=http://100.1.8.161/repos/openstack/openstack-juno/epel-7/
+baseurl=http://mirrors.incloud-ci.com/repos/openstack/openstack-juno/epel-7/
 enabled=1
 skip_if_unavailable=0
 gpgcheck=0

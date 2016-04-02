@@ -12,22 +12,14 @@
 
 [base]
 name=CentOS-$releasever - Base
-baseurl=http://100.1.8.161/centos/$releasever/os/$basearch/
+baseurl=http://mirrors.incloud-ci.com/centos/$releasever/os/$basearch/
 gpgcheck=0
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
-
-#released updates 
-[updates]
-name=CentOS-$releasever - Updates
-baseurl=http://100.1.8.161/centos/$releasever/updates/$basearch/
-gpgcheck=0
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
-enabled=1
 
 #additional packages that may be useful
 [extras]
 name=CentOS-$releasever - Extras
-baseurl=http://100.1.8.161/centos/$releasever/extras/$basearch/
+baseurl=http://mirrors.incloud-ci.com/centos/$releasever/extras/$basearch/
 gpgcheck=0
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 
