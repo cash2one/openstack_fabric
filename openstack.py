@@ -314,7 +314,7 @@ def _setup_neutron_controller():
 		service_tenant_id = run("keystone tenant-get service | grep id |awk '{print $4}'").strip()
 		if len(service_tenant_id) != 32:
 			raise Exception("Unknown Tenant")
-		run("sed -i 's/%SERVICE_TENANT_ID%/" + service_tenant_id + "/g' " + NEUTRON_ML2_CONTROLLER_CONF)
+		run("sed -i 's/%SERVICE_TENANT_ID%/" + service_tenant_id + "/g' " + NEUTRON_CONTROLLER_CONF)
 	run("rm -f /etc/neutron/plugin.ini")
 	run("ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini")
 	put(LOCAL_NOVA_NEUTRON_UPDATE_CONTROLLER_CONF, NOVA_NEUTRON_UPDATE_CONTROLLER_CONF)
