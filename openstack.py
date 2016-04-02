@@ -69,6 +69,11 @@ def _put_hosts():
 	put(HOST_LIST, HOST_LIST)
 
 @roles('all')
+def _disable_firewalld():
+	run("systemctl stop firewalld.service")
+	run("systemctl disable firewalld.service")
+
+@roles('all')
 def _test_connection():
 	run('hostname')
 
@@ -487,6 +492,10 @@ def openstack_repo():
 
 def test():
 	execute(_test_connection)
+
+def prepare():
+	execute(_put_hosts)
+	execute(_disable_firewalld)
 
 def all():
 	execute(_local_repo)
