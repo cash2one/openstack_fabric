@@ -242,7 +242,7 @@ def _setup_nova_controller():
 	ipaddr = get_ipaddr(env.host)
 	run("sed -i 's/%CONTROLLER_MANAGE_IP%/" + ipaddr + "/g' " + NOVA_CONTROLLER_CONF)
 	run("su -s /bin/sh -c 'nova-manage db sync' nova")
-	run("# systemctl enable openstack-nova-api.service openstack-nova-cert.service \
+	run("systemctl enable openstack-nova-api.service openstack-nova-cert.service \
 		openstack-nova-consoleauth.service openstack-nova-scheduler.service \
 		openstack-nova-conductor.service openstack-nova-novncproxy.service")
 	run("systemctl restart openstack-nova-api.service openstack-nova-cert.service \
